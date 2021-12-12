@@ -19,21 +19,6 @@ impl Grid {
         }
     }
 
-    fn incr_all(&mut self) {
-        for i in 0..self.h {
-            for j in 0..self.w {
-                self.grid[i][j] += 1;
-                self.visited[i][j] = false;
-            }
-        }
-    }
-
-    fn incr(&mut self, i: i32, j: i32) {
-        if self.valid(i, j) && !self.visited[i as usize][j as usize] {
-            self.grid[i as usize][j as usize] += 1;
-        }
-    }
-
     fn valid(&self, i: i32, j: i32) -> bool {
         i >= 0 && i < self.w as i32 && j >= 0 && j < self.h as i32
     }
@@ -49,6 +34,26 @@ impl Grid {
         true
     }
 
+    fn incr_all(&mut self) {
+        for i in 0..self.h {
+            for j in 0..self.w {
+                self.grid[i][j] += 1;
+                self.visited[i][j] = false;
+            }
+        }
+    }
+
+    fn incr_and_try_flush(&mut self, i: i32, j: i32) -> i32 {
+        if self.valid(i, j) && !self.visited[i as usize][j as usize] {
+            self.grid[i as usize][j as usize] += 1;
+            if self.grid[i as usize][j as usize] > 9 {
+                return self.try_flash(i, j);
+            }
+        }
+
+        0
+    }
+
     fn try_flash(&mut self, i: i32, j: i32) -> i32 {
         if !self.valid(i, j) {
             return 0;
@@ -60,23 +65,14 @@ impl Grid {
         self.grid[i as usize][j as usize] = 0;
         self.visited[i as usize][j as usize] = true;
 
-        self.incr(i - 1, j - 1);
-        self.incr(i - 1, j);
-        self.incr(i - 1, j + 1);
-        self.incr(i, j - 1);
-        self.incr(i, j + 1);
-        self.incr(i + 1, j - 1);
-        self.incr(i + 1, j);
-        self.incr(i + 1, j + 1);
-
-        self.try_flash(i - 1, j - 1)
-            + self.try_flash(i - 1, j)
-            + self.try_flash(i - 1, j + 1)
-            + self.try_flash(i, j - 1)
-            + self.try_flash(i, j + 1)
-            + self.try_flash(i + 1, j - 1)
-            + self.try_flash(i + 1, j)
-            + self.try_flash(i + 1, j + 1)
+        self.incr_and_try_flush(i - 1, j - 1)
+            + self.incr_and_try_flush(i - 1, j)
+            + self.incr_and_try_flush(i - 1, j + 1)
+            + self.incr_and_try_flush(i, j - 1)
+            + self.incr_and_try_flush(i, j + 1)
+            + self.incr_and_try_flush(i + 1, j - 1)
+            + self.incr_and_try_flush(i + 1, j)
+            + self.incr_and_try_flush(i + 1, j + 1)
             + 1
     }
 }
