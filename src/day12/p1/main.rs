@@ -3,13 +3,13 @@ use std::collections::{HashMap, HashSet};
 use std::io::{stdin, BufRead, BufReader};
 use std::rc::Rc;
 
-struct Graph {
-    graph: HashMap<String, Rc<RefCell<Vec<String>>>>,
-    visited: HashSet<String>,
+struct Graph<'a> {
+    graph: HashMap<&'a str, Rc<RefCell<Vec<&'a str>>>>,
+    visited: HashSet<&'a str>,
     c: usize,
 }
 
-impl Graph {
+impl<'a> Graph<'a> {
     fn new() -> Self {
         Self {
             graph: HashMap::new(),
@@ -18,9 +18,9 @@ impl Graph {
         }
     }
 
-    fn add_edge(&mut self, u: String, v: String) {
+    fn add_edge(&mut self, u: &'a str, v: &'a str) {
         self.graph
-            .entry(u.clone())
+            .entry(u)
             .or_insert(Rc::new(RefCell::new(Vec::new())))
             .borrow_mut()
             .push(v.clone());
@@ -31,10 +31,10 @@ impl Graph {
             .push(u);
     }
 
-    fn count_all_paths(&mut self, start: &str, end: &str) -> usize {
+    fn count_all_paths(&mut self, start: &'a str, end: &'a str) -> usize {
         self.c += 1;
         if !start.chars().any(|c| c.is_uppercase()) {
-            self.visited.insert(start.to_string());
+            self.visited.insert(start);
         }
 
         let mut cnt = 0;
@@ -55,11 +55,14 @@ impl Graph {
 }
 
 fn main() {
-    let inputs = BufReader::new(stdin()).lines().map(|l| l.unwrap());
+    let inputs: Vec<String> = BufReader::new(stdin())
+        .lines()
+        .map(|l| l.unwrap())
+        .collect();
     let mut g = Graph::new();
-    for i in inputs {
-        let s: Vec<&str> = i.split("-").collect();
-        g.add_edge(s[0].to_string(), s[1].to_string());
+    for i in inputs.iter() {
+        let (u, v) = i.split_once("-").unwrap();
+        g.add_edge(&u, &v);
     }
     println!("{:?}", g.count_all_paths("start", "end"));
 }
