@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::io::{stdin, BufRead, BufReader};
 
 #[derive(Debug)]
@@ -6,50 +7,45 @@ enum FoldDirection {
     Y(usize),
 }
 
-fn fold_space(space: Vec<Vec<char>>, fold_direction: FoldDirection) -> Vec<Vec<char>> {
+fn fold_space(
+    space: HashSet<(usize, usize)>,
+    fold_direction: FoldDirection,
+) -> HashSet<(usize, usize)> {
+    let ita = space.iter().map(|p| *p);
+    let itb = space.iter();
     match fold_direction {
-        FoldDirection::X(x) => {
-            let mut a: Vec<Vec<char>> = Vec::new();
-            let mut b: Vec<Vec<char>> = Vec::new();
-            space.iter().for_each(|v| {
-                let (l, r) = v.split_at(x);
-                a.push(l.iter().map(|c| *c).collect::<Vec<char>>());
-                b.push(r.iter().map(|c| *c).collect::<Vec<char>>());
-            });
-            let mut r: Vec<Vec<char>> = a.iter().map(|l| l.clone()).collect();
-            for (i, v) in b.iter().enumerate() {
-                for (j, c) in v.iter().enumerate() {
-                    if *c == '#' {
-                        r[i][x - j] = *c;
-                    }
-                }
-            }
-            r
-        }
-        FoldDirection::Y(y) => {
-            let (a, b) = space.split_at(y);
-            let mut r: Vec<Vec<char>> = a.iter().map(|l| l.clone()).collect();
-            for (i, v) in b.iter().enumerate() {
-                for (j, c) in v.iter().enumerate() {
-                    if *c == '#' {
-                        r[y - i][j] = *c;
-                    }
-                }
-            }
-            r
-        }
+        FoldDirection::X(x) => ita
+            .filter(|p| p.0 <= x)
+            .collect::<HashSet<_>>()
+            .union(
+                &itb.filter(|p| p.0 > x)
+                    .map(|p| (2 * x - p.0, p.1))
+                    .collect(),
+            )
+            .map(|p| *p)
+            .collect(),
+        FoldDirection::Y(y) => ita
+            .filter(|p| p.1 <= y)
+            .collect::<HashSet<_>>()
+            .union(
+                &itb.filter(|p| p.1 > y)
+                    .map(|p| (p.0, 2 * y - p.1))
+                    .collect(),
+            )
+            .map(|p| *p)
+            .collect(),
     }
 }
 
 fn main() {
     let mut lines = BufReader::new(stdin()).lines().map(|l| l.unwrap());
-    let mut dots: Vec<(usize, usize)> = Vec::new();
+    let mut space: HashSet<(usize, usize)> = HashSet::new();
     while let Some(l) = lines.next() {
         if l.is_empty() {
             break;
         }
         let (a, b) = l.split_once(",").unwrap();
-        dots.push((a.parse::<usize>().unwrap(), b.parse::<usize>().unwrap()));
+        space.insert((a.parse::<usize>().unwrap(), b.parse::<usize>().unwrap()));
     }
     let mut fold_directions: Vec<FoldDirection> = Vec::new();
     while let Some(l) = lines.next() {
@@ -63,25 +59,23 @@ fn main() {
         fold_directions.push(d);
     }
 
-    let width = dots.iter().max_by_key(|p| p.0).map(|p| p.0).unwrap();
-    let height = dots.iter().max_by_key(|p| p.1).map(|p| p.1).unwrap();
-
-    let mut space = vec![vec!['.'; width + 1]; height + 1];
-    for (i, j) in dots {
-        space[j][i] = '#'
+    for f in fold_directions {
+        space = fold_space(space, f);
+        println!("dots: {}", space.len());
     }
 
-    for fd in fold_directions {
-        space = fold_space(space, fd);
-        println!();
-        let mut cnt = 0;
-        for c in space.iter() {
-            cnt += c.iter().filter(|p| **p == '#').count();
-        }
-        println!("dots: {}", cnt);
-    }
+    // Draw
     println!();
-    for c in space.iter() {
-        println!("{:?}", c);
+    let width = space.iter().max_by_key(|p| p.0).unwrap().0;
+    let height = space.iter().max_by_key(|p| p.1).unwrap().1;
+    let mut v = vec![vec![' '; width + 1]; height + 1];
+    for (i, j) in space.iter() {
+        v[*j][*i] = '#';
+    }
+    for r in v {
+        for c in r {
+            print!("{}", c);
+        }
+        println!();
     }
 }
