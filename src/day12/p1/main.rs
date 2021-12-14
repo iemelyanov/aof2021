@@ -6,7 +6,6 @@ use std::rc::Rc;
 struct Graph<'a> {
     graph: HashMap<&'a str, Rc<RefCell<Vec<&'a str>>>>,
     visited: HashSet<&'a str>,
-    c: usize,
 }
 
 impl<'a> Graph<'a> {
@@ -14,7 +13,6 @@ impl<'a> Graph<'a> {
         Self {
             graph: HashMap::new(),
             visited: HashSet::new(),
-            c: 0,
         }
     }
 
@@ -32,7 +30,6 @@ impl<'a> Graph<'a> {
     }
 
     fn count_all_paths(&mut self, start: &'a str, end: &'a str) -> usize {
-        self.c += 1;
         if !start.chars().any(|c| c.is_uppercase()) {
             self.visited.insert(start);
         }
