@@ -106,7 +106,7 @@ impl Packet {
         let mut sum = self.version as usize;
 
         for c in self.sub_packets.iter() {
-            sum += sum_versions(&c)
+            sum += c.versions_sum()
         }
 
         sum
@@ -234,16 +234,6 @@ fn parse(bits: &BitSet, from: usize) -> (usize, Box<Packet>) {
     }
 
     (total_bits, packet)
-}
-
-fn sum_versions(packet: &Packet) -> usize {
-    let mut sum = packet.version as usize;
-
-    for c in packet.sub_packets.iter() {
-        sum += sum_versions(&c)
-    }
-
-    sum
 }
 
 fn main() {
